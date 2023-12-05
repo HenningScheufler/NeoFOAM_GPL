@@ -1,0 +1,3 @@
+[submodule "NeoFOAM"]
+	path = NeoFOAM
+	url = https://github.com/exasim-project/NeoFOAM.git

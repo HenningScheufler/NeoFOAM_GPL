@@ -85,11 +85,14 @@ doc/Doxygen/DTAGS
 
 Kokkos*
 kokkos-4.2.00
+NeoFOAM_GPL/bin
+NeoFOAM_GPL/lib
+NeoFOAM_GPL/share
+NeoFOAM_GPL/include
 # subprojects
 /OpenFOAM-v2306
 ThirdParty-v2306
 packagecache
-NeoFOAM
 .snakemake
 benchmark/matrixAssembly/ofcase
 benchmark/matrixAssembly/parameters

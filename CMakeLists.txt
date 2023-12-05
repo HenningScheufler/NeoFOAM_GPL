@@ -4,10 +4,12 @@
 cmake_minimum_required(VERSION 3.22.0)
 
 project(
-  NeoFOAM
+  NeoFOAM_GPL
   LANGUAGES C CXX
   VERSION 0.1.0
   DESCRIPTION "An implementation of FOAM")
+
+add_subdirectory(NeoFOAM)
 
 include(cmake/PreventInSourceBuilds.cmake)
 include(cmake/StandardProjectSettings.cmake)
@@ -29,17 +31,17 @@ option(NEOFOAM_ENABLE_PCH "Enable precompiled header" FALSE)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(project_options INTERFACE)
-include(cmake/CompilerWarnings.cmake)
-add_library(project_warnings INTERFACE)
-myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS}
-                               FALSE "" "" "")
+# add_library(project_options INTERFACE)
+# include(cmake/CompilerWarnings.cmake)
+# add_library(project_warnings INTERFACE)
+# myproject_set_project_warnings(project_warnings ${myproject_WARNINGS_AS_ERRORS}
+#                                FALSE "" "" "")
 
-include(cmake/Sanitizer.cmake)
-enable_sanitizers(
-  project_options NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK
-  NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
-  NEOFOAM_ENABLE_SANITIZE_MEMORY)
+# include(cmake/Sanitizer.cmake)
+# enable_sanitizers(
+#   project_options NEOFOAM_ENABLE_SANITIZE_ADDRESS NEOFOAM_ENABLE_SANITIZE_LEAK
+#   NEOFOAM_ENABLE_SANITIZE_UB NEOFOAM_ENABLE_SANITIZE_THREAD
+#   NEOFOAM_ENABLE_SANITIZE_MEMORY)
 
 if(NEOFOAM_ENABLE_PCH)
   target_precompile_headers(project_options INTERFACE <vector> <string>
@@ -59,10 +61,10 @@ add_subdirectory(src)
 #   add_subdirectory(applications)
 # endif()
 
-add_custom_target(
-  cmake-format
-  COMMAND find . -name CMakeLists.txt -exec cmake-format -i {} +
-  WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
+# add_custom_target(
+#   cmake-format
+#   COMMAND find . -name CMakeLists.txt -exec cmake-format -i {} +
+#   WORKING_DIRECTORY ${PROJECT_SOURCE_DIR})
 
-include(cmake/install_helpers.cmake)
-neofoam_install()
+# include(cmake/install_helpers.cmake)
+# neofoam_GPL_install()
