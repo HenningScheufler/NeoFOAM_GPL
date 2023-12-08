@@ -7,3 +7,5 @@ cmake -S . -B build  -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=$PWD/NeoF
 
 # Build the project using make
 cmake --build build --target install
+
+PATH=$PWD/NeoFOAM_GPL/bin:$PATH

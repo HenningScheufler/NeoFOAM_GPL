@@ -22,5 +22,7 @@ target_link_libraries(
          $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}/libPstream.so
          $ENV{FOAM_LIBBIN}/libOSspecific.o)
 
+install(TARGETS explicitOperators DESTINATION bin)
+
 
 

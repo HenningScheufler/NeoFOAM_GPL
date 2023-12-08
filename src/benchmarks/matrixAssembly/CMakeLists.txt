@@ -5,7 +5,7 @@
 add_executable(matrixAssembly "matrixAssembly.cpp")
 
 set_target_properties(matrixAssembly PROPERTIES CXX_STANDARD 17)
-# target_compile_options(matrixAssembly PUBLIC -Wall -Wextra -Wold-style-cast -Wnon-virtual-dtor -Wno-unused-parameter -Wno-invalid-offsetof -Wno-attributes -Wno-unknown-pragmas -ftemplate-depth-100)
+
 target_compile_definitions(matrixAssembly PUBLIC WM_LABEL_SIZE=32 NoRepository WM_DP OPENFOAM=2306 OMPI_SKIP_MPICXX)
 
 target_include_directories(
@@ -20,8 +20,8 @@ target_link_libraries(
   PUBLIC $ENV{FOAM_LIBBIN}/libOpenFOAM.so
          $ENV{FOAM_LIBBIN}/libfiniteVolume.so
          $ENV{FOAM_LIBBIN}/libmeshTools.so
-         $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}/libPstream.so
-         $ENV{FOAM_LIBBIN}/libOSspecific.o)
+         $ENV{FOAM_LIBBIN}/$ENV{FOAM_MPI}/libPstream.so)
+       #   $ENV{FOAM_LIBBIN}/libOSspecific.o)
 
 
 
