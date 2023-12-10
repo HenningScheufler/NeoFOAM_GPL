@@ -1,5 +1,7 @@
 #include <t8.h>
-#include "treeAMRMesh.hpp"
+#include "NeoFOAM/mesh/treeAMR/treeAMRMesh.hpp"
+#include "NeoFOAM_GPL/treeAMR/t8_MeshModifier.hpp"
+#include <memory>
 
 int main (int argc, char **argv)
 {
@@ -22,13 +24,14 @@ int main (int argc, char **argv)
   t8_init (SC_LP_PRODUCTION);
 
   {
-    // treeAMRMesh tMesh(comm,5,8);
+    // std::unique_ptr<NeoFOAM::treeAMRMeshModifier> t8mod = std::make_unique<t8_MeshModifier>(comm,5,8);
+    NeoFOAM::treeAMRMesh tMesh(std::make_unique<t8_MeshModifier>(comm,5,8));
 
-    // tMesh.refine();
+    tMesh.refine();
 
-    // tMesh.write();
+    tMesh.write();
 
-    // std::cout << "nElements: " << tMesh.nElements() << std::endl;
+    std::cout << "nElements: " << tMesh.nElements() << std::endl;
   }
 
   sc_finalize ();
