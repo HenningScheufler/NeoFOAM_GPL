@@ -42,13 +42,6 @@ NeoFOAM::unstructuredMesh readOpenFOAMMesh(const Foam::fvMesh &mesh)
     Kokkos::deep_copy(neighbour.field() , neighbour_host);
     Kokkos::deep_copy(V.field() , V_host);
 
-
-    // NeoFOAM::vectorField Sf_("Sf",nInternalFaces);  // area vector
-    // NeoFOAM::labelField owner_("owner",nInternalFaces);  // owner cell
-    // NeoFOAM::labelField neighbour_("neighbour",nInternalFaces);  // neighbour cell
-    // NeoFOAM::scalarField V_("V",nCells);  // cell volume
-    // int32_t nCells_ = nCells;  // number of cells
-    // int32_t nInternalFaces_ = nInternalFaces;  // number of internal faces
     NeoFOAM::unstructuredMesh uMesh(Sf, owner, neighbour, V, nCells, nInternalFaces);
 
     return uMesh;
