@@ -57,6 +57,7 @@ if(NEOFOAM_ENABLE_CLANG_TIDY)
 endif()
 
 add_subdirectory(src)
+add_subdirectory(applications)
 # if(NEOFOAM_BUILD_APPS)
 #   add_subdirectory(applications)
 # endif()
