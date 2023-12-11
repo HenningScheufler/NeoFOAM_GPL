@@ -179,4 +179,107 @@ private:
     t8_cmesh_t cmesh_;       ///< The underlying mesh data structure.
     t8_forest_t forest_;     ///< The underlying forest data structure.
     t8_scheme_cxx_t *scheme; ///< The scheme used for mesh operations.
+
+    void computeFaceAddressing()
+    {
+        // TODO optimize allocations
+
+        
+        std::array<double, 3> elem_midpoint = {0.0, 0.0, 0.0};
+        std::array<double, 3> face_normal = {0.0, 0.0, 0.0};
+        std::array<double, 3> face_centroid = {0.0, 0.0, 0.0};
+        std::array<double, 3> dist_face_to_center = {0.0, 0.0, 0.0};
+        double V = 0.0;
+        // Compute face addressing code goes here
+        // loop over the elements of forest
+        int32_t lclIdx = 0;
+        for (int32_t itree = 0; itree < t8_forest_get_num_local_trees (forest_); itree++) {
+            t8_eclass_t tree_class = t8_forest_get_tree_class (forest_, itree);
+            t8_eclass_scheme_c *eclass_scheme = t8_forest_get_eclass_scheme (forest_, tree_class);
+            for (int32_t ielement = 0; ielement < t8_forest_get_tree_num_elements (forest_, itree); ielement++) {
+                // increment the local index over multiple trees
+                lclIdx++; 
+
+
+                const t8_element_t *element = t8_forest_get_element_in_tree (forest_, itree, ielement);
+                t8_forest_element_centroid (forest_, itree, element, elem_midpoint.data());
+                t8_forest_element_volume (forest_, itree, element, &V);
+                Cx_.push_back (elem_midpoint[0]);
+                Cy_.push_back (elem_midpoint[1]);
+                Cz_.push_back (elem_midpoint[2]);
+                V_.push_back (V);
+
+                int num_faces = eclass_scheme->t8_element_num_faces (element);
+                for (int iface = 0; iface < num_faces; iface++) {
+                    int num_neighbors;                /**< Number of neighbors for each face */
+                    int *dual_faces;                  /**< The face indices of the neighbor elements */
+                    t8_locidx_t *neighids;            /**< Indices of the neighbor elements */
+                    t8_element_t **neighbors;         /*< Neighboring elements. */
+                    t8_eclass_scheme_c *neigh_scheme; /*< Neighboring elements scheme. */
+
+                    /* Collect all neighbors at the current face. */
+                    t8_forest_leaf_face_neighbors (forest_, itree, element, &neighbors, iface, &dual_faces, &num_neighbors,
+                                                &neighids, &neigh_scheme, 1);
+
+                    t8_forest_element_face_normal(forest_, itree, element, iface, face_normal.data());
+                    t8_forest_element_face_centroid(forest_, itree, element, iface,face_centroid.data());
+
+                    // does the normal point inwards or outwards?
+                    dist_face_to_center[0] = elem_midpoint[0] - face_centroid[0];
+                    dist_face_to_center[1] = elem_midpoint[1] - face_centroid[1];
+                    dist_face_to_center[2] = elem_midpoint[2] - face_centroid[2];
+                    // can have multiple neibouts
+                    // TODO account for multiple neighbors
+                    if (dist_face_to_center[0] * face_normal[0] < 0.0)
+                    {
+                        Ax_.push_back(t8_forest_element_face_area(forest_, itree, element, iface));
+                    }
+                    else if(dist_face_to_center[1] * face_normal[1] < 0.0)
+                    {
+                        Ay_.push_back(t8_forest_element_face_area(forest_, itree, element, iface));
+                    }
+                    else if(dist_face_to_center[2] * face_normal[2] < 0.0)
+                    {
+                        Az_.push_back(t8_forest_element_face_area(forest_, itree, element, iface));
+                    }
+
+
+                    /* Retrieve the `height` of the face neighbor. Account for two neighbors in case
+                    of a non-conforming interface by computing the average. */
+                    double height = 0.0;
+                    if (num_neighbors > 0) {
+                    for (int ineigh = 0; ineigh < num_neighbors; ineigh++) {
+                        height = height + element_data[neighids[ineigh]].height;
+                    }
+                    height = height / num_neighbors;
+                    }
+
+                    /* Fill in the neighbor information of the 3x3 stencil. */
+                    switch (iface) {
+                    case 0:  // NORTH
+                    stencil[0][1] = height;
+                    dx[0] = element_data[neighids[0]].dx;
+                    break;
+                    case 1:  // SOUTH
+                    stencil[2][1] = height;
+                    dx[2] = element_data[neighids[0]].dx;
+                    break;
+                    case 2:  // WEST
+                    stencil[1][0] = height;
+                    dy[0] = element_data[neighids[0]].dy;
+                    break;
+                    case 3:  // EAST
+                    stencil[1][2] = height;
+                    dy[2] = element_data[neighids[0]].dy;
+                    break;
+                    }
+
+                    /* Free allocated memory. */
+                    T8_FREE (neighbors);
+                    T8_FREE (dual_faces);
+                    T8_FREE (neighids);
+                }
+            }
+        }
+    };
 };
