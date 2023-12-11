@@ -6,6 +6,8 @@
 #include <iostream>
 #include "primitives/scalar.hpp"
 
+#include <span>
+
 namespace NeoFOAM
 {
     // Basically a CSR approach to connectivity - avoids 'vector of vectors' memory layout for connectivity.
@@ -14,21 +16,21 @@ namespace NeoFOAM
     {
     public:
         KOKKOS_FUNCTION
-        deviceAdjacency(const deviceAdjacency<T> &rhs)
+        deviceAdjacency(const deviceAdjacency<Tlabel> &rhs)
             : size_(rhs.size_), adjacency_(rhs.adjacency_), offset_(rhs.offset_)
         {
 
         }
 
         KOKKOS_FUNCTION
-        deviceAdjacency(const Kokkos::View<T *> &adjacency, const Kokkos::View<T *> &offset)
+        deviceAdjacency(const Kokkos::View<Tlabel *> &adjacency, const Kokkos::View<Tlabel *> &offset)
             : size_(field.size()), adjacency_(adjacency_), offset_(rhs.offset)
         {
 
         }
 
         deviceAdjacency(const std::string &name, const int size)
-            : size_(size), offset_(Kokkos::View<T *>(name, size)) // note adjacency not sized
+            : size_(size), offset_(Kokkos::View<Tlabel *>(name, size)) // note adjacency not sized
         {
 
         }
@@ -44,17 +46,22 @@ namespace NeoFOAM
             return offset_.name(); 
         }
 
-        [[nodiscard]] inline int size()
+        [[nodiscard]] inline Tlabel size()
         {
             return offset_.size();
         }
     
-        [[nodiscard]] inline std::span<const Tlabel> at(const std::Tlabel& index) const {
+        [[nodiscard]] inline std::span<const Tlabel> at(const Tlabel& index) const {
             return (*this)[index];
         }
 
-        [[nodiscard]] inline std::span<const std::Tlabel> operator[](const std::Tlabel& index) const {
-            return {adjacency_.begin() + static_cast<s_size_t>(offset_[index]),
+        [[nodiscard]] inline std::span<const Tlabel> operator[](const Tlabel& index) const {
+            return {adjacency_.begin() + static_cast<Tlabel>(offset_[index]),
+                    offset_[index + 1] - offset_[index]};
+        }
+
+        [[nodiscard]] inline std::span<Tlabel> operator[](const Tlabel& index) {
+            return {adjacency_.begin() + static_cast<Tlabel>(offset_[index]),
                     offset_[index + 1] - offset_[index]};
         }
 
@@ -62,6 +69,6 @@ namespace NeoFOAM
         Kokkos::View<Tlabel *> adjacency_;
         Kokkos::View<Tlabel *> offset_;    // NOTE used .name here for class name
 
-        int size_;
+        Tlabel size_;
     };
 } // namespace NeoFOAM
