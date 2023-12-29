@@ -60,7 +60,7 @@ Description
 #include "timeSelector.H"
 
 #include "profiling.H"
-#include "NeoFOAM/blas/fields.hpp"
+#include "NeoFOAM/blas/field.hpp"
 #include "NeoFOAM/mesh/unstructuredMesh/unstructuredMesh.hpp"
 #include "NeoFOAM/cellCentredFiniteVolume/grad/gaussGreenGrad.hpp"
 #include "NeoFOAM_GPL/readers/foamMesh.hpp"
@@ -91,29 +91,57 @@ int main(int argc, char *argv[])
 
         NeoFOAM::unstructuredMesh uMesh = readOpenFOAMMesh(mesh);
         NeoFOAM::scalarField Temperature("T", T.internalField().size());
+        NeoFOAM::gaussGreenGrad::RegisterFunctions();
+
         for (int i =0; i<N;i++)
         {
             addProfiling(neofoamGradOperator, "neofoamGradOperator");
-            NeoFOAM::vectorField gradPhi = NeoFOAM::gaussGreenGrad(uMesh).grad(Temperature);
-            // gradGPU.grad(gradPhi,Temperature);
+            NeoFOAM::vectorField test = NeoFOAM::gaussGreenGrad(uMesh).grad(Temperature);
+            Kokkos::fence();
+        }
+
+        for (int i =0; i<N;i++)
+        {
+            addProfiling(neofoamGradOperator, "neofoamGradOperator runtime selection");
+            NeoFOAM::vectorField test = NeoFOAM::gaussGreenGrad(uMesh).grad(Temperature,"atomic");
             Kokkos::fence();
         }
 
         auto gradGPU = NeoFOAM::gaussGreenGrad(uMesh);
+        for (int i =0; i<N;i++)
+        {
+            addProfiling(neofoamGradOperator, "neofoamGradOperator allocate");
+            NeoFOAM::gaussGreenGrad(uMesh).grad_allocate(Temperature);
+            Kokkos::fence();
+        }
+
         NeoFOAM::vectorField gradPhi = create_gradField(uMesh.nCells_);
         for (int i =0; i<N;i++)
         {
-            addProfiling(neofoamGradOperator, "neofoamGradOperator inject");
-            // NeoFOAM::vectorField gradPhi = NeoFOAM::gaussGreenGrad(uMesh).grad(Temperature);
-            gradGPU.grad(gradPhi,Temperature);
+            addProfiling(neofoamGradOperator, "neofoamGradOperator inject atomic");
+            gradGPU.grad_atomic(gradPhi,Temperature);
             Kokkos::fence();
         }
 
         for (int i =0; i<N;i++)
         {
-            addProfiling(neofoamGradOperator, "neofoamGradOperator inject atomic");
-            // NeoFOAM::vectorField gradPhi = NeoFOAM::gaussGreenGrad(uMesh).grad(Temperature);
+            addProfiling(neofoamGradOperator, "neofoamGradOperator inject allocted vector");
+            Kokkos::View<NeoFOAM::vector *> gradPhi_host("test",uMesh.nCells_);
             gradGPU.grad_atomic(gradPhi,Temperature);
+            Kokkos::fence();
+        }
+        for (int i =0; i<N;i++)
+        {
+            addProfiling(neofoamGradOperator, "neofoamGradOperator inject allocted scalar[3]");
+            Kokkos::View<double *[3]> gradPhi_host("test",uMesh.nCells_);
+            gradGPU.grad_atomic(gradPhi,Temperature);
+            Kokkos::fence();
+        }
+        for (int i =0; i<N;i++)
+        {
+            addProfiling(neofoamGradOperator, "neofoamGradOperator inject allocted outside");
+            NeoFOAM::vectorField gradPhi2 = create_gradField(uMesh.nCells_);
+            gradGPU.grad_atomic(gradPhi2,Temperature);
             Kokkos::fence();
         }
 
